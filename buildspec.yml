@@ -1,22 +1,22 @@
 version: 0.2
+
 phases:
   pre_build:
     commands:
-      - echo Logging in to Amazon ECR...
-      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin 769433671483.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+      - echo "Logging in to Docker Hub..."
+      - docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_PASSWORD
+      - aws ecr get-login-password | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+
   build:
     commands:
-      - echo Building the Docker image...
-      - docker build -t frontend ./frontend
-      - docker tag frontend:latest 769433671483.dkr.ecr.ca-central-1.amazonaws.com/frontend-capstone:latest
+      - echo "Building Docker image..."
+      - docker build -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/wild-rydes-app:latest .
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/wild-rydes-app:latest
 
-      - echo Building the Docker image...
-      - docker build -t backend ./backend
-      - docker tag backend:latest 769433671483.dkr.ecr.ca-central-1.amazonaws.com/backend-capstone:latest
   post_build:
     commands:
-      - echo Pushing the Docker image...
-      - docker push 769433671483.dkr.ecr.ca-central-1.amazonaws.com/frontend-capstone:latest
-      - docker push 769433671483.dkr.ecr.ca-central-1.amazonaws.com/backend-capstone:latest
+      - echo "Generating imagedefinitions.json..."
+      - echo '[{"name":"wild-rydes-app","imageUri":"'$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/wild-rydes-app:latest'"}]' > imagedefinitions.json
+
 artifacts:
   files: '**/*'
